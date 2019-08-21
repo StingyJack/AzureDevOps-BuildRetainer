@@ -40,13 +40,21 @@ namespace BuildRetainer
                     }
                     var now = DateTime.Now;
                     build.KeepForever = true;
-                    var updateResult = buildClient.UpdateBuildAsync(build, build.Id).Gar();
-                    if (updateResult.LastChangedDate >= now)
+                    try
                     {
-                        Info($"Updated the {nameof(build.KeepForever)} value for build {project.Name} - {build.Definition.Name} {build.BuildNumber} to {true}");
-                        continue;
+                        var updateResult = buildClient.UpdateBuildAsync(build, build.Id).Gar();
+                        if (updateResult.LastChangedDate >= now)
+                        {
+                            Info($"Updated the {nameof(build.KeepForever)} value for build {project.Name} - {build.Definition.Name} {build.BuildNumber} to {true}");
+                            continue;
+                        }
+
+                        throw new InvalidOperationException($"{nameof(updateResult)}.{nameof(updateResult.LastChangedDate)} was {updateResult.LastChangedDate} and {nameof(now)} was {now}. Update was not applied.");
                     }
-                    Error($"Failed to set the {nameof(build.KeepForever)} value for build {project.Name} - {build.Definition.Name} {build.BuildNumber} to {true}");
+                    catch (Exception e)
+                    {
+                        Error($"Failed to set the {nameof(build.KeepForever)} value for build {project.Name} - {build.Definition.Name} {build.BuildNumber} to {true}. Error {e}");
+                    }
                 }
             }
         }
